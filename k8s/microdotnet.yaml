@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ch03microdotnet
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ch03microdotnet
+  template:
+    metadata:
+      labels:
+        app: ch03microdotnet
+    spec:
+      containers:
+      - name: ch03microdotnet
+        image: ${DOCKER_USERNAME}/ch03microdotnet_worker:stable
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ch03microdotnet-service
+spec:
+  selector:
+    app: ch03microdotnet
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: CluserIP #if I won't use Ingress API: LoadBalancer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ch03microdotnet-ingress
+spec:
+  rules:
+  - host: my-app.example.com #please update this
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: ch03microdotnet-service
+            port:
+              number: 80  
