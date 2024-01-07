@@ -38,7 +38,15 @@ pipeline{
         }
         stage('Deploy'){
             steps{
-                echo 'Deploying the image'
+                echo 'Deploying the frontend'
+                sh '''
+                    if [ -f "k8s/frontend.yaml" ]; then
+                        export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
+                        envsubst < k8s/frontend.yaml | kubectl apply -f -
+                    else
+                        echo "No deployment file found"
+                    fi
+                '''
             }
         }
     }
