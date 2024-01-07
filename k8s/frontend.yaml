@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ch03frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ch03frontend
+  template:
+    metadata:
+      labels:
+        app: ch03frontend
+    spec:
+      containers:
+      - name: ch03frontend
+        image: ${DOCKER_USERNAME}/ch03fe_vote:stable
+        ports:
+        - containerPort: 80
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ch03frontend-service
+spec:
+  selector:
+    app: ch03frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer        
