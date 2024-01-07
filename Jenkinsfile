@@ -1,14 +1,14 @@
-pipeline{
+pipeline {
     agent any
-    stages{
-        stage('Clone Repository'){
-            steps{
+    stages {
+        stage('Clone Repository') {
+            steps {
                 echo 'Cloning the repository'
                 git 'https://github.com/hftamayo/devopsbc2023.git'
             }
         }
-        stage('Run tests'){
-            steps{
+        stage('Run tests') {
+            steps {
                 echo 'Running unit tests'
                 sh '''
                     if [ -d "tests" ] && [ -n "$(ls -A tests/*.py 2>/dev/null)" ]; then
@@ -19,14 +19,14 @@ pipeline{
                 '''
             }
         }
-        stage('Build image'){
-            steps{
+        stage('Build image') {
+            steps {
                 echo 'Building the image'
                 sh 'docker build -t ch03fe_vote:stable .'
             }
         }
-        stage('Push image'){
-            steps{
+        stage('Push image') {
+            steps {
                 echo 'Pushing the image'
                 withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
                     sh '''
@@ -36,8 +36,8 @@ pipeline{
                 }
             }
         }
-        stage('Deploy'){
-            steps{
+        stage('Deploy') {
+            steps {
                 echo 'Deploying the frontend'
                 sh '''
                     if [ -f "k8s/frontend.yaml" ]; then
