@@ -17,7 +17,7 @@ spec:
         image: ${DOCKER_USERNAME}/ch03fe_vote:stable
         ports:
         - containerPort: 80
-
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -29,4 +29,21 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
-  type: LoadBalancer        
+  type: CluserIP #if I won't use Ingress API: LoadBalancer
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ch03frontend-ingress
+spec:
+  rules:
+  - host: my-app.example.com #please update this
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: ch03frontend-service
+            port:
+              number: 80  
