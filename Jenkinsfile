@@ -139,6 +139,71 @@ pipeline {
             }
         }
 
+        stage('Result nodejs microservice') {
+            stages {
+                stage('change to result directory') {
+                    steps {
+                        dir('result') {
+                            echo 'Changing to result directory'
+                        }
+                    }
+                }
+
+                stage('Installing dependencies') {
+                    steps {
+                        echo 'installing dependencies'
+                        sh 'npm install'
+                    }
+                }
+
+                stage('build docker image') {
+                    steps {
+                        echo 'Building the docker image of result microservice'
+                        sh 'docker build -t ch03be_result:stable .'
+                    }
+                }
+
+                stage('Run result microservice container') {
+                    steps {
+                        echo 'Running the result microservice container'
+                        sh 'docker run -d -p 8080:80 --name result ch03be_result:stable'
+                    }
+                }
+
+                stage('Run tests') {
+                    steps {
+                        echo 'Running result microservice unit tests'
+                        sh 'npm run test'
+                    }
+                }
+
+                stage('Push image') {
+                    steps {
+                        echo 'Pushing the image'
+                        withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
+                            sh '''
+                                echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
+                                docker push $DOCKER_HUB_USERNAME/ch03be_result:latest
+                            '''
+                        }
+                    }
+                }
+
+                stage('Deploy') {
+                    steps {
+                        echo 'Deploying the result microservice'
+                        sh '''
+                            if [ -f "k8s/microdotnet.yaml" ]; then
+                                export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
+                                envsubst < k8s/microdotnet.yaml | kubectl apply -f -
+                            else
+                                echo "No deployment file found"
+                            fi
+                        '''
+                    }
+                }
+            }
+        }
 
     }
 }
