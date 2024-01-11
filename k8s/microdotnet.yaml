@@ -30,20 +30,3 @@ spec:
       port: 80
       targetPort: 80
   type: CluserIP #if I won't use Ingress API: LoadBalancer
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ch03microdotnet-ingress
-spec:
-  rules:
-  - host: my-app.example.com #please update this
-    http:
-      paths:
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: ch03microdotnet-service
-            port:
-              number: 80  
