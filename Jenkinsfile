@@ -73,6 +73,36 @@ pipeline {
             }
         }
 
+        stage('Database layer') {
+            stages {
+                stage('Deploy postgres') {
+                    echo 'Deploying postgres'
+                    steps {
+                        sh '''
+                            if [ -f "k8s/postgres.yaml" ]; then
+                                kubectl apply -f k8s/postgres.yaml
+                            else
+                                echo "No deployment file found"
+                            fi
+                        '''
+                    }
+                }
+
+                stage('Deploy redis') {
+                    echo 'Deploying redis'
+                    steps {
+                        sh '''
+                            if [ -f "k8s/redis.yaml" ]; then
+                                kubectl apply -f k8s/redis.yaml
+                            else
+                                echo "No deployment file found"
+                            fi
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Worker dotnet microservice') {
             stages {
                 stage('change to worker directory') {
