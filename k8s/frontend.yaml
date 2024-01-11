@@ -29,21 +29,23 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
-  type: CluserIP #if I won't use Ingress API: LoadBalancer
+  type: ClusterIP #if I won't use Ingress API: LoadBalancer
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: ch03frontend-ingress
-spec:
-  rules:
-  - host: my-app.example.com #please update this
-    http:
-      paths:
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: ch03frontend-service
-            port:
-              number: 80  
+
+#for ingress service testing on cloud providers
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: ch03frontend-ingress
+# spec:
+#   rules:
+#   - host: my-app.example.com #please update this
+#     http:
+#       paths:
+#       - pathType: Prefix
+#         path: "/"
+#         backend:
+#           service:
+#             name: ch03frontend-service
+#             port:
+#               number: 80  
