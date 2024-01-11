@@ -51,7 +51,7 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
                             sh '''
                                 echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-                                docker push $DOCKER_HUB_USERNAME/ch03fe_vote:latest
+                                docker push $DOCKER_HUB_USERNAME/ch03fe_vote:stable
                             '''
                         }
                     }
@@ -117,7 +117,7 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
                             sh '''
                                 echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-                                docker push $DOCKER_HUB_USERNAME/ch03be_worker:latest
+                                docker push $DOCKER_HUB_USERNAME/ch03be_worker:stable
                             '''
                         }
                     }
@@ -183,7 +183,7 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
                             sh '''
                                 echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-                                docker push $DOCKER_HUB_USERNAME/ch03be_result:latest
+                                docker push $DOCKER_HUB_USERNAME/ch03be_result:stable
                             '''
                         }
                     }
@@ -193,9 +193,9 @@ pipeline {
                     steps {
                         echo 'Deploying the result microservice'
                         sh '''
-                            if [ -f "k8s/microdotnet.yaml" ]; then
+                            if [ -f "k8s/micronode.yaml" ]; then
                                 export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
-                                envsubst < k8s/microdotnet.yaml | kubectl apply -f -
+                                envsubst < k8s/micronode.yaml | kubectl apply -f -
                             else
                                 echo "No deployment file found"
                             fi
