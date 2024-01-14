@@ -1,0 +1,11 @@
+Usando el playground de k8s de killercoda:
+
+verificar el status del cluster:
+- kubectl get nodes
+- kubectl get pods --all-namespaces
+-kubectl get componentstatuses
+
+verificar el status de helm:
+- helm version
+- helm version --short
+
