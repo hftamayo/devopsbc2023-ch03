@@ -179,31 +179,50 @@ pipeline {
                     }
                 }
 
-                stage('Installing dependencies') {
+                stage('Run unit tests') {
                     steps {
-                        echo 'installing dependencies'
-                        sh 'npm install'
+                        echo 'Running unit tests routines'
+                        sh 'npm run test'
                     }
-                }
+                }                
 
                 stage('build docker image') {
                     steps {
                         echo 'Building the docker image of result microservice'
-                        sh 'docker build -t ch03be_result:stable .'
+                        sh 'docker build -t ch03be_result:stable-1.0.0 .'
+                        sh 'docker tag ch03be_result:stable-1.0.0 hftamayo/ch03be_result:stable-1.0.0'
+
                     }
                 }
 
                 stage('Run result microservice container') {
                     steps {
                         echo 'Running the result microservice container'
-                        sh 'docker run -d -p 8080:80 --name result ch03be_result:stable'
+                        script {
+                            def result = sh(script: 'docker run -d -p 8080:80 --name result ch03be_result:stable', returnStdout: true)
+                            def containerId = result.trim()
+                            env.CONTAINER_ID = containerId
+                        }
+                    }
+                    post {
+                        failure {
+                            echo 'Stopping the result microservice container due to a failure'
+                            sh 'docker stop result'
+                        }
                     }
                 }
 
-                stage('Run tests') {
+                stage('Run integration tests') {
                     steps {
-                        echo 'Running result microservice unit tests'
-                        sh 'npm run test'
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                            echo 'Running result microservice integration test routines'
+                            sh "docker exec -it ${env.CONTAINER_ID} npm run test"
+                        }
+                    }
+                    post {
+                        failure {
+                            echo 'No tests were found'
+                        }
                     }
                 }
 
