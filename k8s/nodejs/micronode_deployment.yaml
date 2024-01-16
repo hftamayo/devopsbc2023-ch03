@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: ch03micronodejs
-        image: ${DOCKER_USERNAME}/ch03micronodejs_result:stable
+        image: ${DOCKER_USERNAME}/ch03be_result:stable-1.0.0
         ports:
         - containerPort: 80
