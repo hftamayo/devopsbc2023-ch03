@@ -9,9 +9,12 @@ COPY *.csproj .
 RUN dotnet restore -a $TARGETARCH
 
 COPY . .
+
+#stage1: build and run the unit tests 
+RUN dotnet test --no-build --verbosity normal
 RUN dotnet publish -c release -o /app -a $TARGETARCH --self-contained false --no-restore
 
-# app image
+#stage2: build the production image
 FROM mcr.microsoft.com/dotnet/runtime:7.0
 WORKDIR /app
 COPY --from=build /app .
