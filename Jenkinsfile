@@ -49,17 +49,10 @@ pipeline {
                     }
                 }
 
-                stage('Restore dependencies') {
-                    steps {
-                        echo 'Restoring dependencies'
-                        sh 'dotnet restore'
-                    }
-                }
-
-                stage('build docker image') {
+                stage('build docker image for testing') {
                     steps {
                         echo 'Building the docker image for testing'
-                        sh 'docker build -t ch03be_worker:stable .'
+                        sh 'docker build --build-arg BUILDPLATFORM=linux/amd64 --build-arg TARGETPLATFORM=linux/amd64 --build-arg TARGETARCH=amd64 -t ch03be_worker:stable-1.0.0 .'
                     }
                 }
 
