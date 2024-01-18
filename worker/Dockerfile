@@ -1,7 +1,8 @@
-FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/sdk:7.0 as build
+ARG BUILDPLATFORM
 ARG TARGETPLATFORM
 ARG TARGETARCH
-ARG BUILDPLATFORM
+
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:7.0 as build
 RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM"
 
 WORKDIR /source
