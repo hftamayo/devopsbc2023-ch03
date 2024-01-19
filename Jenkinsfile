@@ -226,7 +226,7 @@ pipeline {
             }
         }
 
-        stage('Frontend') {
+        stage('Frontend python microservice') {
             stages {
                 stage('change to vote directory') {
                     steps {
@@ -236,30 +236,103 @@ pipeline {
                     }
                 }
 
-                stage('Install dependencies') {
+                stage('build frontend docker image for testing') {
                     steps {
-                        echo 'Installing dependencies'
-                        sh 'pip install -r requirements.txt'
+                        echo 'Building frontend docker image for testing'
+                        sh 'docker build -t ch03fe_vote:test --target dev --load .'
                     }
                 }
 
-                stage('Run tests') {
+                stage('Run frontend test microservice container') {
                     steps {
-                        echo 'Running unit tests'
+                        echo 'Running the frontend test microservice container'
+                        script {
+                            def result = sh(script: 'docker run -d -p 8080:80 --name frontend ch03fe_vote:test', returnStdout: true)
+                            def containerId = result.trim()
+                            env.FRONTEND_CONTAINER_ID = containerId
+                        }
+                    }
+                    post {
+                        failure {
+                            echo 'Stopping the frontend microservice container due to a failure'
+                            sh 'docker stop frontend'
+                        }
+                    }
+                }
+
+                stage('Run frontend testing routines') {
+                    steps {
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                            echo 'Running frontend microservice test routines'
+                            sh "docker exec -it ${env.FRONTEND_CONTAINER_ID} python -m unittest discover -s tests -p 'test_*.py' -v"
+                        }
+                    }
+                    post {
+                        always {
+                            echo 'Stopping the frontend microservice test container'
+                            sh 'docker stop ${env.FRONTEND_CONTAINER_ID}'
+                        }
+                        failure {
+                            echo 'No tests were found'
+                        }
+                    }
+                }
+
+
+------------------------------
+                stage('Build worker microservice image for production') {
+                    steps {
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            echo 'Building worker microservice docker image for production'
+                            sh "docker build -t ch03be_worker:stable-1.0.0 ."
+                            sh "docker tag ch03be_worker:stable-1.0.0 hftamayo/ch03be_worker:stable-1.0.0"
+                        }
+                    }
+                    post {
+                        success {
+                            echo 'Worker microservice production docker image built successfully'
+                        }
+                        failure {
+                            echo 'Failed to build worker microservice production Docker image'
+                        }
+                    }
+                }                
+
+                stage('Push image') {
+                    steps {
+                        echo 'Pushing stable worker microservice image'
+                        withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
+                            sh '''
+                                echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
+                                docker push $DOCKER_HUB_USERNAME/ch03be_worker:stable-1.0.0
+                            '''
+                        }
+                    }
+                }
+
+                stage('Deploy') {
+                    steps {
+                        echo 'Deploying the worker microservice'
                         sh '''
-                            if [ -d "tests" ] && [ -n "$(ls -A tests/*.py 2>/dev/null)" ]; then
-                                python -m unittest discover -s tests
+                            if [ -f "k8s/microdotnet.yaml" ]; then
+                                export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
+                                envsubst < k8s/microdotnet.yaml | kubectl apply -f -
                             else
-                                echo "No tests found"
+                                echo "No deployment file found"
                             fi
                         '''
                     }
                 }
 
+
+-----------------------------
+
+
+
                 stage('Build image') {
                     steps {
                         echo 'Building the image'
-                        sh 'docker build -t ch03fe_vote:stable .'
+                        sh 'docker build -t ch03fe_vote:stable-1.0.0 .'
                     }
                 }
 
@@ -269,7 +342,7 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
                             sh '''
                                 echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-                                docker push $DOCKER_HUB_USERNAME/ch03fe_vote:stable
+                                docker push $DOCKER_HUB_USERNAME/ch03fe_vote:stable-1.0.0
                             '''
                         }
                     }
