@@ -7,6 +7,7 @@ RUN dotnet restore
 COPY . .
 
 #stage1: build and run the unit tests 
+FROM build as test
 RUN dotnet test --no-build --verbosity normal
 RUN dotnet publish -c release -o /app --self-contained false --no-restore
 
