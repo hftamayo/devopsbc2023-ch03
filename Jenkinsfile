@@ -52,31 +52,70 @@ pipeline {
                 stage('build docker image for testing') {
                     steps {
                         echo 'Building the docker image for testing'
-                        sh 'docker build --build-arg BUILDPLATFORM=linux/amd64 --build-arg TARGETPLATFORM=linux/amd64 --build-arg TARGETARCH=amd64 -t ch03be_worker:stable-1.0.0 .'
+                        sh 'docker buildx build --platform linux/amd64 -t ch03be_worker:test --target test --load .'
                     }
                 }
 
-                stage('Run worker microservice container') {
+                stage('Run worker test microservice container') {
                     steps {
-                        echo 'Running the worker microservice container'
-                        sh 'docker run -d -p 8080:80 --name worker ch03be_worker:stable'
+                        echo 'Running the worker test microservice container'
+                        script {
+                            def result = sh(script: 'docker run -d -p 8080:80 --name worker ch03be_worker:test', returnStdout: true)
+                            def containerId = result.trim()
+                            env.WORKER_CONTAINER_ID = containerId
+                        }
+                    }
+                    post {
+                        failure {
+                            echo 'Stopping the worker microservice container due to a failure'
+                            sh 'docker stop worker'
+                        }
                     }
                 }
 
-                stage('Run tests') {
+                stage('Run worker testing routines') {
                     steps {
-                        echo 'Running worker microservice unit tests'
-                        sh 'dotnet test'
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                            echo 'Running worker microservice test routines'
+                            sh "docker exec -it ${env.WORKER_CONTAINER_ID} dotnet test"
+                        }
                     }
+                    post {
+                        always {
+                            echo 'Stopping the worker microservice test container'
+                            sh 'docker stop ${env.WORKER_CONTAINER_ID}'
+                        }
+                        failure {
+                            echo 'No tests were found'
+                        }
+                    }                    
                 }
+
+                stage('Build worker microservice image for production') {
+                    steps {
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            echo 'Building worker microservice docker image for production'
+                            sh "docker build -t ch03be_worker:stable-1.0.0 ."
+                            sh "docker tag ch03be_worker:stable-1.0.0 hftamayo/ch03be_worker:stable-1.0.0"
+                        }
+                    }
+                    post {
+                        success {
+                            echo 'Worker microservice production docker image built successfully'
+                        }
+                        failure {
+                            echo 'Failed to build worker microservice production Docker image'
+                        }
+                    }
+                }                
 
                 stage('Push image') {
                     steps {
-                        echo 'Pushing the image'
+                        echo 'Pushing stable worker microservice image'
                         withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
                             sh '''
                                 echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-                                docker push $DOCKER_HUB_USERNAME/ch03be_worker:stable
+                                docker push $DOCKER_HUB_USERNAME/ch03be_worker:stable-1.0.0
                             '''
                         }
                     }
@@ -130,7 +169,7 @@ pipeline {
                         script {
                             def result = sh(script: 'docker run -d -p 8080:80 --name result ch03be_result:stable-1.0.0', returnStdout: true)
                             def containerId = result.trim()
-                            env.CONTAINER_ID = containerId
+                            env.RESULT_CONTAINER_ID = containerId
                         }
                     }
                     post {
@@ -145,13 +184,13 @@ pipeline {
                     steps {
                         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                             echo 'Running result microservice integration test routines'
-                            sh "docker exec -it ${env.CONTAINER_ID} npm run test"
+                            sh "docker exec -it ${env.RESULT_CONTAINER_ID} npm run test"
                         }
                     }
                     post {
                         always {
                             echo 'Stopping the result microservice container'
-                            sh 'docker stop ${env.CONTAINER_ID}'
+                            sh 'docker stop ${env.RESULT_CONTAINER_ID}'
                         }
                         failure {
                             echo 'No tests were found'
@@ -165,7 +204,7 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
                             sh '''
                                 echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-                                docker push $DOCKER_HUB_USERNAME/ch03be_result:stable
+                                docker push $DOCKER_HUB_USERNAME/ch03be_result:stable-1.0.0
                             '''
                         }
                     }
