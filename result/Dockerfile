@@ -1,4 +1,17 @@
-FROM node:18-slim
+FROM node:18-slim as test
+
+WORKDIR /usr/local/app
+
+COPY package*.json ./
+
+RUN npm ci
+
+COPY . .
+
+RUN npm test
+
+
+FROM node:18-slim as production
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl tini && \
@@ -6,15 +19,8 @@ RUN apt-get update && \
 
 WORKDIR /usr/local/app
 
-RUN npm install -g nodemon
-
-COPY package*.json ./
-
-RUN npm ci && \
- npm cache clean --force && \
- mv /usr/local/app/node_modules /node_modules
-
-COPY . .
+COPY --from=test /usr/local/app/node_modules ./node_modules
+COPY --from=test /usr/local/app ./
 
 ENV PORT 80
 EXPOSE 80
