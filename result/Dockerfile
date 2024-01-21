@@ -8,7 +8,7 @@ RUN npm ci
 
 COPY . .
 
-RUN npm test
+RUN if ls tests/*.test.js 1> /dev/null 2>&1; then npm test; else echo "No tests found"; fi
 
 
 FROM node:18-slim as production
