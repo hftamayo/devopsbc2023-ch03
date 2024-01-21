@@ -9,6 +9,11 @@ WORKDIR /usr/local/app
 COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+FROM base AS test
+COPY . .
+RUN pip install pytest
+RUN if ls tests/*.py 1> /dev/null 2>&1; then pytest; else echo "No tests found"; fi
+
 FROM base AS dev
 RUN pip install watchdog
 ENV FLASK_ENV=development
