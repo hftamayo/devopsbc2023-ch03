@@ -49,53 +49,37 @@ pipeline {
                     }
                 }
 
-                stage('build docker image for testing') {
+                stage('build and test of the worker microservice docker container') {
                     steps {
-                        echo 'Building the docker image for testing'
-                        sh 'docker buildx build --platform linux/amd64 -t ch03be_worker:test --target test --load .'
-                    }
-                }
-
-                stage('Run worker test microservice container') {
-                    steps {
-                        echo 'Running the worker test microservice container'
-                        script {
-                            def result = sh(script: 'docker run -d -p 8080:80 --name worker ch03be_worker:test', returnStdout: true)
-                            def containerId = result.trim()
-                            env.WORKER_CONTAINER_ID = containerId
-                        }
-                    }
-                    post {
-                        failure {
-                            echo 'Stopping the worker microservice container due to a failure'
-                            sh 'docker stop worker'
-                        }
-                    }
-                }
-
-                stage('Run worker testing routines') {
-                    steps {
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            echo 'Running worker microservice test routines'
-                            sh "docker exec -it ${env.WORKER_CONTAINER_ID} dotnet test"
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            echo 'Building worker microservice docker image for testing'
+                            sh 'docker buildx build --platform linux/amd64 -t ch03be_worker:test --target test --load .'
+                            sh 'docker run --name worker_test -d ch03be_worker:test'
+                            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                                echo 'Running worker microservice test routines'
+                                sh 'docker exec -it worker_test dotnet test'
+                            }
                         }
                     }
                     post {
                         always {
                             echo 'Stopping the worker microservice test container'
-                            sh 'docker stop ${env.WORKER_CONTAINER_ID}'
+                            sh 'docker stop worker_test'
+                        }
+                        success {
+                            echo 'Worker microservice test docker image built successfully'
                         }
                         failure {
-                            echo 'No tests were found'
+                            echo 'Failed to build worker microservice test Docker image'
                         }
-                    }                    
+                    }
                 }
 
-                stage('Build worker microservice image for production') {
+                stage('build worker microservice docker image for production') {
                     steps {
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             echo 'Building worker microservice docker image for production'
-                            sh "docker build -t ch03be_worker:stable-1.0.0 ."
+                            sh 'docker build -t ch03be_worker:stable-1.0.0 . --target production --load .'
                             sh "docker tag ch03be_worker:stable-1.0.0 hftamayo/ch03be_worker:stable-1.0.0"
                         }
                     }
@@ -107,9 +91,9 @@ pipeline {
                             echo 'Failed to build worker microservice production Docker image'
                         }
                     }
-                }                
+                }
 
-                stage('Push image') {
+                stage('Push worker microservice production image') {
                     steps {
                         echo 'Pushing stable worker microservice image'
                         withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
@@ -121,7 +105,7 @@ pipeline {
                     }
                 }
 
-                stage('Deploy') {
+                stage('Deploy worker microservice production k8s cluster') {
                     steps {
                         echo 'Deploying the worker microservice'
                         sh '''
@@ -153,7 +137,7 @@ pipeline {
                             echo 'Building result microservice docker image for testing'
                             sh 'docker build -t ch03be_result:test . --target test --load .'
                             sh 'docker run --name result_test -d ch03be_result:test'
-                            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCEDD') {
+                            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                                 echo 'Running result microservice test routines'
                                 sh 'docker exec -it result_test npm test'
                             }
@@ -176,7 +160,7 @@ pipeline {
                 stage('build result microservice docker image for production') {
                     steps {
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            echo 'Building result microservice docker image for testing'
+                            echo 'Building result microservice docker image for production'
                             sh 'docker build -t ch03be_result:stable-1.0.0 . --target production --load .'
                             sh "docker tag ch03be_result:stable-1.0.0 hftamayo/ch03be_result:stable-1.0.0"
                         }
@@ -231,56 +215,51 @@ pipeline {
 
                 stage('build frontend docker image for testing') {
                     steps {
+                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                         echo 'Building frontend docker image for testing'
-                        sh 'docker build -t ch03fe_vote:test --target dev --load .'
-                    }
-                }
-
-                stage('Run frontend test microservice container') {
-                    steps {
-                        echo 'Running the frontend test microservice container'
-                        script {
-                            def result = sh(script: 'docker run -d -p 8080:80 --name frontend ch03fe_vote:test', returnStdout: true)
-                            def containerId = result.trim()
-                            env.FRONTEND_CONTAINER_ID = containerId
-                        }
-                    }
-                    post {
-                        failure {
-                            echo 'Stopping the frontend microservice container due to a failure'
-                            sh 'docker stop frontend'
-                        }
-                    }
-                }
-
-                stage('Run frontend testing routines') {
-                    steps {
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            echo 'Running frontend microservice test routines'
-                            sh "docker exec -it ${env.FRONTEND_CONTAINER_ID} python -m unittest discover -s tests -p 'test_*.py' -v"
+                        sh 'docker build -t ch03fe_vote:test --target test --load .'
+                        sh 'docker run --name vote_test -d ch03fe_vote:test'
+                            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                                echo 'Running vote microservice test routines'
+                                sh 'docker exec -it vote_test pytest'
+                            }
                         }
                     }
                     post {
                         always {
-                            echo 'Stopping the frontend microservice test container'
-                            sh 'docker stop ${env.FRONTEND_CONTAINER_ID}'
+                            echo 'Stopping the vote microservice test container'
+                            sh 'docker stop vote_test'
+                        }
+                        success {
+                            echo 'Vote microservice test docker image built successfully'
                         }
                         failure {
-                            echo 'No tests were found'
+                            echo 'Failed to build vote microservice test Docker image'
                         }
                     }
                 }
 
-                stage('Build image') {
+                stage('build vote microservice docker image for production') {
                     steps {
-                        echo 'Building the image'
-                        sh 'docker build -t ch03fe_vote:stable-1.0.0 .'
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            echo 'Building vote microservice docker image for production'
+                            sh 'docker build -t ch03fe_vote:stable-1.0.0 . --target production --load .'
+                            sh "docker tag ch03fe_vote:stable-1.0.0 hftamayo/ch03fe_vote:stable-1.0.0"
+                        }
+                    }
+                    post {
+                        success {
+                            echo 'Vote microservice production docker image built successfully'
+                        }
+                        failure {
+                            echo 'Failed to build vote microservice production Docker image'
+                        }
                     }
                 }
 
-                stage('Push image') {
+                stage('Push vote microservice production image') {
                     steps {
-                        echo 'Pushing the image'
+                        echo 'Pushing the vote microservice production image'
                         withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
                             sh '''
                                 echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
