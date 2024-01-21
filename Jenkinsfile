@@ -137,7 +137,7 @@ pipeline {
             }
         }
 
-        stage('Result nodejs microservice') {
+        stage('Result microservice nodejs') {
             stages {
                 stage('change to result directory') {
                     steps {
@@ -147,60 +147,53 @@ pipeline {
                     }
                 }
 
-                stage('Run unit tests') {
+                stage('build and test of the result microservice docker container') {
                     steps {
-                        echo 'Running unit tests routines'
-                        sh 'npm run test'
-                    }
-                }                
-
-                stage('build docker image') {
-                    steps {
-                        echo 'Building the docker image of result microservice'
-                        sh 'docker build -t ch03be_result:stable-1.0.0 .'
-                        sh 'docker tag ch03be_result:stable-1.0.0 hftamayo/ch03be_result:stable-1.0.0'
-
-                    }
-                }
-
-                stage('Run result microservice container') {
-                    steps {
-                        echo 'Running the result microservice container'
-                        script {
-                            def result = sh(script: 'docker run -d -p 8080:80 --name result ch03be_result:stable-1.0.0', returnStdout: true)
-                            def containerId = result.trim()
-                            env.RESULT_CONTAINER_ID = containerId
-                        }
-                    }
-                    post {
-                        failure {
-                            echo 'Stopping the result microservice container due to a failure'
-                            sh 'docker stop result'
-                        }
-                    }
-                }
-
-                stage('Run integration tests') {
-                    steps {
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                            echo 'Running result microservice integration test routines'
-                            sh "docker exec -it ${env.RESULT_CONTAINER_ID} npm run test"
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            echo 'Building result microservice docker image for testing'
+                            sh 'docker build -t ch03be_result:test . --target test --load .'
+                            sh 'docker run --name result_test -d ch03be_result:test'
+                            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCEDD') {
+                                echo 'Running result microservice test routines'
+                                sh 'docker exec -it result_test npm test'
+                            }
                         }
                     }
                     post {
                         always {
-                            echo 'Stopping the result microservice container'
-                            sh 'docker stop ${env.RESULT_CONTAINER_ID}'
+                            echo 'Stopping the result microservice test container'
+                            sh 'docker stop result_test'
+                        }
+                        success {
+                            echo 'Result microservice test docker image built successfully'
                         }
                         failure {
-                            echo 'No tests were found'
+                            echo 'Failed to build result microservice test Docker image'
                         }
                     }
                 }
 
-                stage('Push image') {
+                stage('build result microservice docker image for production') {
                     steps {
-                        echo 'Pushing the image'
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            echo 'Building result microservice docker image for testing'
+                            sh 'docker build -t ch03be_result:stable-1.0.0 . --target production --load .'
+                            sh "docker tag ch03be_result:stable-1.0.0 hftamayo/ch03be_result:stable-1.0.0"
+                        }
+                    }
+                    post {
+                        success {
+                            echo 'Result microservice production docker image built successfully'
+                        }
+                        failure {
+                            echo 'Failed to build result microservice production Docker image'
+                        }
+                    }
+                }
+
+                stage('Push result microservice production image') {
+                    steps {
+                        echo 'Pushing the result microservice production image'
                         withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
                             sh '''
                                 echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
@@ -210,7 +203,7 @@ pipeline {
                     }
                 }
 
-                stage('Deploy') {
+                stage('Deploy result microservice production k8s cluster') {
                     steps {
                         echo 'Deploying the result microservice'
                         sh '''
@@ -277,57 +270,6 @@ pipeline {
                         }
                     }
                 }
-
-
-------------------------------
-                stage('Build worker microservice image for production') {
-                    steps {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            echo 'Building worker microservice docker image for production'
-                            sh "docker build -t ch03be_worker:stable-1.0.0 ."
-                            sh "docker tag ch03be_worker:stable-1.0.0 hftamayo/ch03be_worker:stable-1.0.0"
-                        }
-                    }
-                    post {
-                        success {
-                            echo 'Worker microservice production docker image built successfully'
-                        }
-                        failure {
-                            echo 'Failed to build worker microservice production Docker image'
-                        }
-                    }
-                }                
-
-                stage('Push image') {
-                    steps {
-                        echo 'Pushing stable worker microservice image'
-                        withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
-                            sh '''
-                                echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-                                docker push $DOCKER_HUB_USERNAME/ch03be_worker:stable-1.0.0
-                            '''
-                        }
-                    }
-                }
-
-                stage('Deploy') {
-                    steps {
-                        echo 'Deploying the worker microservice'
-                        sh '''
-                            if [ -f "k8s/microdotnet.yaml" ]; then
-                                export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
-                                envsubst < k8s/microdotnet.yaml | kubectl apply -f -
-                            else
-                                echo "No deployment file found"
-                            fi
-                        '''
-                    }
-                }
-
-
------------------------------
-
-
 
                 stage('Build image') {
                     steps {
