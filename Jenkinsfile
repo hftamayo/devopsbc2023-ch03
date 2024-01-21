@@ -20,9 +20,10 @@ pipeline {
                             else
                                 echo "No deployment file found"
                             fi
-                        '''
+                        '''                        // code inside the steps block
                     }
                 }
+            }
 
                 stage('Deploy redis') {
                     echo 'Deploying redis'
@@ -36,7 +37,6 @@ pipeline {
                         '''
                     }
                 }
-            }
         }
 
         stage('Worker dotnet microservice') {
@@ -45,7 +45,7 @@ pipeline {
                     steps {
                         dir('worker') {
                             echo 'Changing to worker directory'
-                        }
+                        }                        // code inside the steps block
                     }
                 }
 
@@ -162,7 +162,7 @@ pipeline {
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             echo 'Building result microservice docker image for production'
                             sh 'docker build -t ch03be_result:stable-1.0.0 . --target production --load .'
-                            sh "docker tag ch03be_result:stable-1.0.0 hftamayo/ch03be_result:stable-1.0.0"
+                            sh 'docker tag ch03be_result:stable-1.0.0 hftamayo/ch03be_result:stable-1.0.0'
                         }
                     }
                     post {
@@ -215,10 +215,10 @@ pipeline {
 
                 stage('build frontend docker image for testing') {
                     steps {
-                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                        echo 'Building frontend docker image for testing'
-                        sh 'docker build -t ch03fe_vote:test --target test --load .'
-                        sh 'docker run --name vote_test -d ch03fe_vote:test'
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            echo 'Building frontend docker image for testing'
+                            sh 'docker build -t ch03fe_vote:test --target test --load .'
+                            sh 'docker run --name vote_test -d ch03fe_vote:test'
                             catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                                 echo 'Running vote microservice test routines'
                                 sh 'docker exec -it vote_test pytest'
@@ -244,7 +244,7 @@ pipeline {
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             echo 'Building vote microservice docker image for production'
                             sh 'docker build -t ch03fe_vote:stable-1.0.0 . --target production --load .'
-                            sh "docker tag ch03fe_vote:stable-1.0.0 hftamayo/ch03fe_vote:stable-1.0.0"
+                            sh 'docker tag ch03fe_vote:stable-1.0.0 hftamayo/ch03fe_vote:stable-1.0.0'
                         }
                     }
                     post {
@@ -284,7 +284,5 @@ pipeline {
                 }
             }
         }
-
-
     }
 }
