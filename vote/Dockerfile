@@ -19,7 +19,7 @@ RUN pip install watchdog
 ENV FLASK_ENV=development
 CMD ["python", "app.py"]
 
-FROM base AS final
+FROM base AS production
 
 COPY . .
 
