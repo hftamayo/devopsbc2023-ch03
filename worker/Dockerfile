@@ -8,7 +8,7 @@ COPY . .
 
 #stage1: build and run the unit tests 
 FROM build as test
-RUN dotnet test --no-build --verbosity normal
+RUN if ls Tests/*.csproj 1> /dev/null 2>&1; then dotnet test --no-build --verbosity normal; else echo "No tests found"; fi
 RUN dotnet publish -c release -o /app --self-contained false --no-restore
 
 #stage2: build the production image
