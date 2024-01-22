@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: ch03microdotnet
-        image: hftamayo/ch03microdotnet_worker:stable-1.0.0
+        image: hftamayo/ch03be_worker:stable-1.0.0
         ports:
         - containerPort: 80
