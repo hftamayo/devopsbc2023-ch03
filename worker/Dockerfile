@@ -14,5 +14,5 @@ RUN dotnet publish -c release -o /app --self-contained false --no-restore
 #stage2: build the production image
 FROM mcr.microsoft.com/dotnet/runtime:7.0
 WORKDIR /app
-COPY --from=build /app .
+COPY --from=test /app .
 ENTRYPOINT ["dotnet", "Worker.dll"]
