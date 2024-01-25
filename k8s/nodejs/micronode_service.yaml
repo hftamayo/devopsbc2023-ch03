@@ -9,4 +9,4 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
-  type: ClusterIP #if I won't use Ingress API: LoadBalancer
+  type: LoadBalancer #if I won't use Ingress API: LoadBalancer
