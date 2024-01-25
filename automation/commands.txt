@@ -9,3 +9,83 @@ verificar el status de helm:
 - helm version
 - helm version --short
 
+git clone https://github.com/hftamayo/devopsbc2023-ch03
+
+cd devopsbc2023-ch03
+# crear el pod
+kubectl apply -f k8s/nginxtest_deployment.yaml
+#chequear el status del deployment:
+- kubectl get deployments
+- kubectl decribe deployment <deployment-name> minkube-app
+- kubectl get pods
+- kubectl describe pod
+- kubectl logs
+
+# ejcutar el servicio
+- kubectl apply -f k8s/nginxtest_service.yaml
+#chequear el service:
+kubectl get services
+#forwardear la app del puerto 80 al 9001:
+kubectl port-forward service/minikube-app 9001:80
+
+probar la app desde afuera:
+https://killercoda.com/examples/scenario/network-traffic-kubernetes
+
+chequeo de resultados a fondo:
+- kubectl get pods
+- kubectl logs <pod-name>
+- kubectl get pv
+- kubectl get pvc
+- kubectl get events
+
+comando para revertir un deployment
+- kubectl get deployments
+- kubectl delete deployment <nombre del deployment>
+
+---------------------------------------------------
+correr la creacion de las imagenes y el push a pie:
+
+- git clone https://github.com/hftamayo/devopsbc2023-ch03
+- cd devopsbc2023-ch03
+- kubectl apply -f k8s/db/postgres_deployment.yaml
+- kubectl apply -f k8s/db/redis_deployment.yaml
+- kubectl apply -f k8s/db/postgres_service.yaml
+- kubectl apply -f k8s/db/redis_service.yaml
+
+- cd worker
+- docker build -t ch03be_worker:stable-1.0.0 .
+- docker tag ch03be_worker:stable-1.0.0 hftamayo/ch03be_worker:stable-1.0.0
+- docker login -u <> -p <>
+- docker push hftamayo/ch03be_worker:stable-1.0.0
+
+- cd ..
+- cd result
+
+- docker build -t ch03be_result:stable-1.0.0 .
+- docker tag ch03be_result:stable-1.0.0 hftamayo/ch03be_result:stable-1.0.0
+- docker push hftamayo/ch03be_result:stable-1.0.0
+
+- cd ..
+- cd vote
+
+- docker build -t ch03fe_vote:stable-1.0.0 .
+- docker tag ch03fe_vote:stable-1.0.0 hftamayo/ch03fe_vote:stable-1.0.0
+- docker push hftamayo/ch03fe_vote:stable-1.0.0
+
+- kubectl apply -f k8s/dotnet/microdotnet_deployment.yaml
+- kubectl apply -f k8s/nodejs/micronode_deployment.yaml
+- kubectl apply -f k8s/frontend/frontend_deployment.yaml
+
+- kubectl apply -f k8s/dotnet/microdotnet_service.yaml
+- kubectl apply -f k8s/nodejs/micronode_service.yaml
+- kubectl apply -f k8s/frontend/frontend_service.yaml
+
+
+- kubectl get services
+- kubectl get pods
+- kubectl logs <pod-name>
+
+-para acceder a los servicios que estan publicados:
+
+kubectl get service <service name>
+la ip que salga en external-ip es la que debo escribir en el navegador
