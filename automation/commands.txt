@@ -138,10 +138,97 @@ Setup del cluster con kudeadm:
 
 sudo kubeadm init --pod-network-cidr=10.244.0.0/16
 ---
-aca por algun motivo esta tratando de usar conteinerd, esto fue
-porque mi usuario no er parte del grupo "docker", mucho ojo
-con esto
+aca me tiraba un error que no podia usar un socket de containerd
+(recordemos que este daemon trabaja junto con docker), en este sitio:
+https://k21academy.com/docker-kubernetes/container-runtime-is-not-running/
+pude depurar el error
 ---
+ls /etc/containerd/config.toml
+mv /etc/containerd/config.toml . (para hacer backup)
+sudo systemctl restart containerd
+esperar un par de segundos y luego:
+sudo systemctl status containerd
+-----
+
 de nuevo:
 sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+-----
+aca me generó este error:
+The HTTP call equal to 'curl -sSL http://localhost:10248/healthz' failed with error: Get "http://localhost:10248/healthz": dial tcp [::1]:10248: connect: connection refused
+---
+
+verificando el status de "kubelet" esta en status exited, voy a reiniciar
+el servicio y de nuevo verificar
+
+viendo el log y pasandolo a un archivo para leerlo mejor:
+- sudo journalctl -u kubelet -n 25 > kubelet.txt
+
+encontré un error que se refiere a que kubelet no puede correr 
+en un sistema con swap, para eso, tengo que desactivarla desde el fstab
+y reiniciar el S.O., basta con comentarear la linea donde diga:
+XXXXXX swap swap XXXX
+
+despues de reiniciar para verificar si la swap esta off:
+- free -h
+- swapon -s
+
+-puesto que la anteriro configuracion generó error debo correr 
+este archivo:
+- sudo kubeadm reset
+
+-intentando correr nuevamente el comando:
+- sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+esta vez todo funciono y debo copiar el token generado:
+
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 10.2.0.238:6443 --token f6vj4u.35uk68g1dhw3nsj3 \
+        --discovery-token-ca-cert-hash sha256:4b60f3c8a91a23714dc78a8412c64602806feadf5e28d26be560b9c020599b1e
+
+2. setting up a local kubeconfig:
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+3. Instalando un pod network:
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+Aca hice uso de este comando:
+- kubectl describe node upsp
+- kubectl get pods -n kube-system
+
+puesto que el server reporta connection refused hice:
+- sudo systemctl status kubelet
+- sudo journalctl -u kube-apiserver
+- sudo systemctl status kubelet.service kube-apiserver.service kube-proxy.service kube-scheduler.service kube-controller-manager.service
+
+practicamente la salida más util fue la del primer comando, le hice un pipe:
+- sudo systemctl status kubelet > kubelet.status y encontré:
+
+
+
+
+
+4. unir mi host OS al nodo recien creado:
+sudo kubeadm join --token <token> <master-ip>:<master-port> --discovery-token-ca-cert-hash sha256:<hash>
 
