@@ -2,6 +2,8 @@
 - [local k8s cluster with minikube](https://www.linkedin.com/pulse/getting-started-minikube-setting-up-local-kubernetes-cluster-mealy/)
 - [setup CICD pipeline with Jenkins and Github](https://github.com/mjah/kubernetes-jenkins-cicd-pipeline-example)
 - [install and setup k8s cluster with kubeadm in Debian](https://www.linuxtechi.com/install-kubernetes-cluster-on-debian/)
+- [Installation and setup of Minikube on Debian](https://techviewleo.com/install-minikube-kubernetes-on-debian/)
+- [Installation of MicroK8S y k0s on Debian](https://techviewleo.com/microk8s-and-k0s-kubernetes-installation-on-debian/)
 
 ### Important Concepts ###
 
