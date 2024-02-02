@@ -223,12 +223,12 @@ puesto que el server reporta connection refused hice:
 - sudo systemctl status kubelet.service kube-apiserver.service kube-proxy.service kube-scheduler.service kube-controller-manager.service
 
 practicamente la salida más util fue la del primer comando, le hice un pipe:
-- sudo systemctl status kubelet > kubelet.status y encontré:
+- sudo systemctl status kubelet > kubelet.status y encontré que no se puede conectar al cluster.
 
+Entonces con la idea de depurar hice:
+- sudo kubeadm reset
+- sudo systemctl status kubelet 
+- sudo systemctl restart kubelet
 
-
-
-
-4. unir mi host OS al nodo recien creado:
-sudo kubeadm join --token <token> <master-ip>:<master-port> --discovery-token-ca-cert-hash sha256:<hash>
-
+y luego me genera un error que falta un yaml, voy a pasarme 
+a obsidian para documentar todo el proceso
