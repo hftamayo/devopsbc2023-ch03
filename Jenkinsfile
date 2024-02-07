@@ -15,28 +15,61 @@ pipeline {
                     echo 'Deploying postgres'
                     steps {
                         sh '''
-                            if [ -f "k8s/postgres.yaml" ]; then
-                                kubectl apply -f k8s/postgres.yaml
+                            if [ -f "k8s/db/postgres_deployment.yaml" ]; then
+                                kubectl apply -f k8s/db/postgres_deployment.yaml
+                                if [ $? -eq 0 ]; then
+                                    echo "Deployment applied successfully"
+                                    if [ -f "k8s/db/postgres_service.yaml" ]; then
+                                        kubectl apply -f k8s/db/postgres_service.yaml
+                                        if [ $? -eq 0 ]; then
+                                            echo "Service applied successfully"
+                                        else
+                                            echo "Failed to apply service"
+                                            exit 1
+                                        fi
+                                    else
+                                        echo "No service file found"
+                                    fi
+                                else
+                                    echo "Failed to apply deployment"
+                                    exit 1
+                                fi
                             else
                                 echo "No deployment file found"
                             fi
                         '''                        // code inside the steps block
                     }
                 }
-            }
-
                 stage('Deploy redis') {
                     echo 'Deploying redis'
                     steps {
                         sh '''
-                            if [ -f "k8s/redis.yaml" ]; then
-                                kubectl apply -f k8s/redis.yaml
+                            if [ -f "k8s/db/postgres_deployment.yaml" ]; then
+                                kubectl apply -f k8s/db/postgres_deployment.yaml
+                                if [ $? -eq 0 ]; then
+                                    echo "Deployment applied successfully"
+                                    if [ -f "k8s/db/postgres_service.yaml" ]; then
+                                        kubectl apply -f k8s/db/postgres_service.yaml
+                                        if [ $? -eq 0 ]; then
+                                            echo "Service applied successfully"
+                                        else
+                                            echo "Failed to apply service"
+                                            exit 1
+                                        fi
+                                    else
+                                        echo "No service file found"
+                                    fi
+                                else
+                                    echo "Failed to apply deployment"
+                                    exit 1
+                                fi
                             else
                                 echo "No deployment file found"
                             fi
                         '''
                     }
                 }
+            }
         }
 
         stage('Worker dotnet microservice') {
