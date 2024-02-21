@@ -14,13 +14,14 @@ pipeline {
                 stage('Deploy postgres') {
                     steps {
                         echo 'Deploying postgres'
+                        sh 'env'
                         sh '''
                             if [ -f "k8s/db/postgres_deployment.yaml" ]; then
-                                microk8s.kubectl apply -f k8s/db/postgres_deployment.yaml
+                                /snap/bin/microk8s.kubectl apply -f k8s/db/postgres_deployment.yaml
                                 if [ $? -eq 0 ]; then
                                     echo "Deployment applied successfully"
                                     if [ -f "k8s/db/postgres_service.yaml" ]; then
-                                        microk8s.kubectl apply -f k8s/db/postgres_service.yaml
+                                        /snap/bin/microk8s.kubectl apply -f k8s/db/postgres_service.yaml
                                         if [ $? -eq 0 ]; then
                                             echo "Service applied successfully"
                                         else
