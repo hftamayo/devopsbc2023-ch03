@@ -16,11 +16,11 @@ pipeline {
                         echo 'Deploying postgres'
                         sh '''
                             if [ -f "k8s/db/postgres_deployment.yaml" ]; then
-                                kubectl apply -f k8s/db/postgres_deployment.yaml
+                                microk8s.kubectl apply -f k8s/db/postgres_deployment.yaml
                                 if [ $? -eq 0 ]; then
                                     echo "Deployment applied successfully"
                                     if [ -f "k8s/db/postgres_service.yaml" ]; then
-                                        kubectl apply -f k8s/db/postgres_service.yaml
+                                        microk8s.kubectl apply -f k8s/db/postgres_service.yaml
                                         if [ $? -eq 0 ]; then
                                             echo "Service applied successfully"
                                         else
@@ -45,11 +45,11 @@ pipeline {
                         echo 'Deploying redis'
                         sh '''
                             if [ -f "k8s/db/postgres_deployment.yaml" ]; then
-                                kubectl apply -f k8s/db/postgres_deployment.yaml
+                                microk8s.kubectl apply -f k8s/db/postgres_deployment.yaml
                                 if [ $? -eq 0 ]; then
                                     echo "Deployment applied successfully"
                                     if [ -f "k8s/db/postgres_service.yaml" ]; then
-                                        kubectl apply -f k8s/db/postgres_service.yaml
+                                        microk8s.kubectl apply -f k8s/db/postgres_service.yaml
                                         if [ $? -eq 0 ]; then
                                             echo "Service applied successfully"
                                         else
@@ -144,7 +144,7 @@ pipeline {
                         sh '''
                             if [ -f "k8s/microdotnet.yaml" ]; then
                                 export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
-                                envsubst < k8s/microdotnet.yaml | kubectl apply -f -
+                                envsubst < k8s/microdotnet.yaml | microk8s.kubectl apply -f -
                             else
                                 echo "No deployment file found"
                             fi
@@ -226,7 +226,7 @@ pipeline {
                         sh '''
                             if [ -f "k8s/micronode.yaml" ]; then
                                 export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
-                                envsubst < k8s/micronode.yaml | kubectl apply -f -
+                                envsubst < k8s/micronode.yaml | microk8s.kubectl apply -f -
                             else
                                 echo "No deployment file found"
                             fi
@@ -308,7 +308,7 @@ pipeline {
                         sh '''
                             if [ -f "k8s/frontend.yaml" ]; then
                                 export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
-                                envsubst < k8s/frontend.yaml | kubectl apply -f -
+                                envsubst < k8s/frontend.yaml | microk8s.kubectl apply -f -
                             else
                                 echo "No deployment file found"
                             fi
