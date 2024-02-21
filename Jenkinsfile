@@ -5,7 +5,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 echo 'Cloning the repository'
-                git 'https://github.com/hftamayo/devopsbc2023-ch03.git'
+                git branch: 'main', url: 'https://github.com/hftamayo/devopsbc2023-ch03.git'
             }
         }
 
