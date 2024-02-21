@@ -12,8 +12,8 @@ pipeline {
         stage('Database layer') {
             stages {
                 stage('Deploy postgres') {
-                    echo 'Deploying postgres'
                     steps {
+                        echo 'Deploying postgres'
                         sh '''
                             if [ -f "k8s/db/postgres_deployment.yaml" ]; then
                                 kubectl apply -f k8s/db/postgres_deployment.yaml
@@ -41,8 +41,8 @@ pipeline {
                     }
                 }
                 stage('Deploy redis') {
-                    echo 'Deploying redis'
                     steps {
+                        echo 'Deploying redis'
                         sh '''
                             if [ -f "k8s/db/postgres_deployment.yaml" ]; then
                                 kubectl apply -f k8s/db/postgres_deployment.yaml
