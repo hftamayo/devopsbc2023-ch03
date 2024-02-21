@@ -37,7 +37,7 @@ pipeline {
                             else
                                 echo "No deployment file found"
                             fi
-                        '''                        // code inside the steps block
+                        '''
                     }
                 }
                 stage('Deploy redis') {
