@@ -1,3 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  reverse-proxy.conf: |
+    server {
+        listen 80;
+
+        location /api {
+            proxy_pass http://10.2.0.238:8003;
+        }
+
+        location / {
+            proxy_pass http://10.9.167.54:3000;
+        }
+    }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,3 +35,10 @@ spec:
         image: nginx:latest # Replace 'latest' with desired Nginx version if needed
         ports:
         - containerPort: 80 # Port on which Nginx listens within the pod
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
