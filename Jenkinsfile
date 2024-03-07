@@ -44,12 +44,12 @@ pipeline {
                     steps {
                         echo 'Deploying redis'
                         sh '''
-                            if [ -f "k8s/db/postgres_deployment.yaml" ]; then
-                                kubectl apply -f k8s/db/postgres_deployment.yaml
+                            if [ -f "k8s/db/redis_deployment.yaml" ]; then
+                                kubectl apply -f k8s/db/redis_deployment.yaml
                                 if [ $? -eq 0 ]; then
                                     echo "Deployment applied successfully"
-                                    if [ -f "k8s/db/postgres_service.yaml" ]; then
-                                        kubectl apply -f k8s/db/postgres_service.yaml
+                                    if [ -f "k8s/db/redis_service.yaml" ]; then
+                                        kubectl apply -f k8s/db/redis_service.yaml
                                         if [ $? -eq 0 ]; then
                                             echo "Service applied successfully"
                                         else
