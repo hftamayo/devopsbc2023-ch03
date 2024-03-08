@@ -1,0 +1,113 @@
+===============================
+ANSIBLE SCRIPT TO AUTOMATE THIS PROCESS:
+
+Yes, Ansible is indeed an alternative to automate the above process. Ansible is a powerful configuration management tool that can be used to automate the setup and configuration of servers. It uses a declarative language to describe system configuration, which can be more maintainable and scalable than shell scripts for complex setups.
+
+Here's a high-level example of how you might use Ansible to automate the setup process:
+
+```yaml
+---
+- hosts: servers
+  become: yes
+  tasks:
+    - name: Install Docker
+      yum:
+        name: docker-ce
+        state: latest
+
+    - name: Start and enable Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install Kubernetes packages
+      yum:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: latest
+        disable_excludes: kubernetes
+
+    - name: Start and enable kubelet service
+      service:
+        name: kubelet
+        state: started
+        enabled: yes
+
+    - name: Initialize Kubernetes
+      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address={{ ansible_host }}
+
+    - name: Install Jenkins
+      yum:
+        name: jenkins
+        state: latest
+
+    - name: Start and enable Jenkins service
+      service:
+        name: jenkins
+        state: started
+        enabled: yes
+...
+```
+
+This Ansible playbook performs the same steps as the shell script, but in a more declarative way. You would run this playbook with the `ansible-playbook` command.
+
+Please note that this is a simplified example and might need adjustments based on your specific environment and requirements. For example, you might need to add tasks to install and configure the necessary repositories, handle errors, and so on. Also, setting up a Kubernetes cluster with a single command like `kubeadm init` is only recommended for learning purposes. For production environments, more advanced setup is required for high availability, security, etc.
+
+===========================
+USAR UN ANSIBLE PLAYBOOK PARA CONFIGURAR JENKINS CON K8S
+
+To configure Jenkins to use Kubernetes agents for your CI/CD pipeline using Ansible, you can use the Jenkins Job DSL or Jenkins Configuration as Code (JCasC) plugin. Here's a high-level example of how you can do this:
+
+1. **Install the necessary Jenkins plugins**: You can use the `jenkins_plugin` module in Ansible to install the necessary plugins. You'll need the Kubernetes plugin and either the Job DSL or JCasC plugin.
+
+```yaml
+- name: Install Jenkins plugins
+  jenkins_plugin:
+    name: "{{ item }}"
+  loop:
+    - kubernetes
+    - job-dsl
+    - configuration-as-code
+```
+
+2. **Configure the Kubernetes plugin**: You can use the Job DSL or JCasC plugin to configure the Kubernetes plugin. Here's an example using JCasC:
+
+```yaml
+- name: Configure Jenkins with JCasC
+  copy:
+    dest: /var/lib/jenkins/jenkins.yaml
+    content: |
+      jenkins:
+        clouds:
+          - kubernetes:
+              name: "kubernetes"
+              serverUrl: "https://your-kubernetes-cluster"
+              credentialsId: "your-kubeconfig-credentials-id"
+              jenkinsUrl: "http://your-jenkins-service"
+              jenkinsTunnel: "your-jenkins-agent-service:50000"
+              podTemplates:
+                - name: "jenkins-agent"
+                  label: "jenkins-agent"
+                  containers:
+                    - name: "jnlp"
+                      image: "jenkins/jnlp-slave:latest"
+                      args: "${computer.jnlpmac} ${computer.name}"
+  notify: Restart Jenkins
+```
+
+This Ansible task creates a `jenkins.yaml` file that configures Jenkins to use Kubernetes agents. You need to replace the placeholders with your actual values.
+
+3. **Restart Jenkins**: After changing the configuration, you need to restart Jenkins for the changes to take effect.
+
+```yaml
+- name: Restart Jenkins
+  command: systemctl restart jenkins
+```
+
+This is a simplified example and might need adjustments based on your specific environment and requirements. For example, you might need to add tasks to install and configure Ansible, handle errors, and so on. Also, setting up a Kubernetes cluster with a single command like `kubeadm init` is only recommended for learning purposes. For production environments, more advanced setup is required for high availability, security, etc.
+
+
+

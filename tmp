@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+    stages {
+        stage('Clone Repository') {
+            steps {
+                echo 'Cloning the repository'
+                git branch: 'main', url: 'https://github.com/hftamayo/devopsbc2023-ch03.git'
+            }
+        }
+        
+        stage('Database layer') {
+            stages {
+                stage('Deploy postgres') {
+                    steps {
+                        echo 'Deploying postgres'
+                        sh '''
+                            if [ -f "k8s/db/postgres_deployment.yaml" ]; then
+                                /snap/bin/microk8s.kubectl apply -f k8s/db/postgres_deployment.yaml
+                                if [ $? -eq 0 ]; then
+                                    echo "Deployment applied successfully"
+                                    if [ -f "k8s/db/postgres_service.yaml" ]; then
+                                        /snap/bin/microk8s.kubectl apply -f k8s/db/postgres_service.yaml
+                                        if [ $? -eq 0 ]; then
+                                            echo "Service applied successfully"
+                                        else
+                                            echo "Failed to apply service"
+                                            exit 1
+                                        fi
+                                    else
+                                        echo "No service file found"
+                                    fi
+                                else
+                                    echo "Failed to apply deployment"
+                                    exit 1
+                                fi
+                            else
+                                echo "No deployment file found"
+                            fi
+                        '''
+                    }
+                }
+
+
+
+            }
+        }
+   }
+}        

@@ -1,0 +1,86 @@
+variables:
+  FLUTTER_VERSION: 3.3.10
+
+stages:
+  - quality
+  - analyze
+  - test
+  - build
+  - deploy
+
+default:
+  image: "cirrusci/flutter:3.3.10"
+
+quality:
+  stage: quality
+  script:
+    # a static code analysis tool, collects code metrics and provide additional rules for the analyzer.
+    # helps to monitor the quality of code.
+    - export PATH="$PATH":"$HOME/.pub-cache/bin"
+    - flutter pub global activate dart_code_metrics
+    - metrics analyze lib -r codeclimate > quality-report.json
+  artifacts:
+    reports:
+      codequality: quality-report.json
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "main"
+
+analyze:
+  stage: analyze
+  script:
+    # wrapper around the dartanalyzer tool. It performs static analysis of your code.
+    # options list - https://github.com/flutter/flutter/blob/master/analysis_options.yaml
+    - flutter analyze --write analyze.txt
+  artifacts:
+    name: analyze
+    when: always
+    paths:
+      - analyze.txt
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "main"
+
+test:
+  stage: test
+  coverage: '/lines.{6}:\s([\d+.\d+]+)%/'
+  script:
+    - export PATH="$PATH":"$HOME/.pub-cache/bin"
+    - flutter pub global activate junitreport
+    - flutter pub global activate cobertura
+    - flutter test --machine --coverage --coverage-path lcov.info | tojunit -o report.xml
+    - lcov --summary lcov.info
+    - cobertura convert -i lcov.info -o cobertura.xml
+  artifacts:
+    name: coverage
+    when: always
+    reports:
+      junit: report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: cobertura.xml
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "main"
+
+build_web_app:
+  stage: build
+  script:
+    - flutter pub get
+    - flutter config --enable-web
+    - flutter build web --base-href /flutter-demo/
+  artifacts:
+    paths:
+      - build/web
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+pages:
+  stage: deploy
+  script:
+    - cp -r build/web public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
