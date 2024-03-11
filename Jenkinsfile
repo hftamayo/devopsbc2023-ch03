@@ -82,7 +82,7 @@ pipeline {
                     }
                 }
 
-                stage('build and test of the worker microservice docker container') {
+                stage('building worker docker container and running testing') {
                     steps {
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             echo 'Building worker microservice docker image for testing'
