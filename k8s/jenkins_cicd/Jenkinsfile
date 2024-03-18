@@ -1,0 +1,24 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build Docker image') {
+            steps {
+                script {
+                    GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+                    sh "docker build -t hftamayo/jenkinsvitamines:${GIT_COMMIT} ."
+                    sh "docker push hftamayo/jenkinsvitamines:${GIT_COMMIT}"
+                }
+            }
+        }
+
+        stage('Update Kubernetes deployment') {
+            steps {
+                script {
+                    sh "sed -i 's|hftamayo/jenkinsvitamines:.*|hftamayo/jenkinsvitamines:${GIT_COMMIT}|' myservice.yml"
+                    sh "kubectl apply -f myservice.yml"
+                }
+            }
+        }
+    }
+}
