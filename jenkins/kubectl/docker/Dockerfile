@@ -28,4 +28,9 @@ RUN echo 'DOCKER_GID=$(stat -c "%g" /var/run/docker.sock)' >> /etc/profile && \
     echo 'groupadd -for -g $DOCKER_GID docker' >> /etc/profile && \
     echo 'usermod -aG docker jenkins' >> /etc/profile
 
+# Copy entrypoint script into the image
+COPY entrypoint.sh /entrypoint.sh
+
 USER jenkins
+
+ENTRYPOINT ["/entrypoint.sh"]
