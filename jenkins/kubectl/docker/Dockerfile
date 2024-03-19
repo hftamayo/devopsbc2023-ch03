@@ -7,6 +7,13 @@ USER root
 # RUN apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io
 # RUN getent group docker || groupadd docker && usermod -aG docker jenkins
 
+# Find out the group ID of the docker group on the host
+RUN DOCKER_SOCKET=/var/run/docker.sock && \
+    DOCKER_GROUP=docker && \
+    DOCKER_GID=$(stat -c '%g' $DOCKER_SOCKET) && \
+    groupadd -for -g $DOCKER_GID $DOCKER_GROUP && \
+    usermod -aG $DOCKER_GROUP jenkins
+
 # Install Docker CLI
 RUN curl -fsSL https://get.docker.com -o get-docker.sh && \
     sh get-docker.sh && \
