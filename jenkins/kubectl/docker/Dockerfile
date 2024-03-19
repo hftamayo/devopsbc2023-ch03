@@ -7,6 +7,11 @@ USER root
 # RUN apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io
 # RUN getent group docker || groupadd docker && usermod -aG docker jenkins
 
+# Install Docker CLI
+RUN curl -fsSL https://get.docker.com -o get-docker.sh && \
+    sh get-docker.sh && \
+    rm get-docker.sh
+
 #kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
     install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
