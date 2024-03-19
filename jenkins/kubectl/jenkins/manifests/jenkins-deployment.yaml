@@ -17,6 +17,7 @@ spec:
           image: hftamayo/jenkinsvitamines:0.0.5
           securityContext:
             privileged: true
+            runAsUser: 0
           ports:
             - containerPort: 8080
             - containerPort: 50000
