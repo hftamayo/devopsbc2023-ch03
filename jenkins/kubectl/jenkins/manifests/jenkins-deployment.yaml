@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: jenkins
-          image: hftamayo/jenkinsvitamines:0.0.3
+          image: hftamayo/jenkinsvitamines:0.0.4
           securityContext:
             privileged: true
           ports:
