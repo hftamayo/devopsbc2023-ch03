@@ -12,6 +12,7 @@ spec:
       labels:
         app: jenkins
     spec:
+      serviceAccountName: jenkins-admin
       containers:
         - name: jenkins
           image: hftamayo/jenkinsvitamines:0.0.5
