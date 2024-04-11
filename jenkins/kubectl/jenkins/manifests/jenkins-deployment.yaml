@@ -12,13 +12,11 @@ spec:
       labels:
         app: jenkins
     spec:
-      serviceAccountName: jenkins-admin
       containers:
         - name: jenkins
           image: hftamayo/jenkinsvitamines:0.0.5
           securityContext:
             privileged: true
-            runAsUser: 0
           ports:
             - containerPort: 8080
             - containerPort: 50000
