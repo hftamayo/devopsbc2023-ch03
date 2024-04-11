@@ -15,11 +15,11 @@ RUN apt-get update && \
 
     #kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
-    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
+    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
  
 #Helm
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && \
     chmod +x get_helm.sh && \
-    ./get_helm.sh && \
+    ./get_helm.sh 
 
 USER jenkins
