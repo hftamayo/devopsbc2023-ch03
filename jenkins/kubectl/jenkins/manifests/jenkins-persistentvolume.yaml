@@ -8,4 +8,4 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /opt/jenkins_home
+    path: ~/jenkins_home
