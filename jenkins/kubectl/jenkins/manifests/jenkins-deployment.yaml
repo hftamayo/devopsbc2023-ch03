@@ -15,6 +15,9 @@ spec:
       containers:
         - name: jenkins
           image: hftamayo/jenkinsvitamines:0.0.6
+          resources:
+            limits:
+              memory: "2Gi"
           securityContext:
             privileged: true
           ports:
