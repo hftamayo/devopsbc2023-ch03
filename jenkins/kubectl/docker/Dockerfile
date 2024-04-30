@@ -12,6 +12,9 @@ RUN apt-get update && \
     apt-get update && \
     apt-get install -y docker-ce docker-ce-cli containerd.io
 
+    #hftamayo: installing tini package
+RUN apt-get install -y tini
+
     #hftamayo: ensuring docker group id
 RUN groupmod -g 994 docker && \
     usermod -aG docker jenkins
