@@ -25,4 +25,11 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
     chmod +x get_helm.sh && \
     ./get_helm.sh 
 
+#hftamayo    
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh    
+
 USER jenkins
+
+#hftamayo
+ENTRYPOINT ["/entrypoint.sh"]
