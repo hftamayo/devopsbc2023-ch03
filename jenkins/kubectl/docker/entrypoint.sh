@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Change the ownership of the Docker socket
-chown root:docker /var/run/docker.sock
+su -c "chown root:docker /var/run/docker.sock" root
 
 # Run the original Jenkins entrypoint script
-exec /sbin/tini -- /usr/local/bin/jenkins.sh
+exec su -c "/sbin/tini -- /usr/local/bin/jenkins.sh" root
