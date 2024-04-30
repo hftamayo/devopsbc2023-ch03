@@ -72,10 +72,13 @@ pipeline {
             }
         }
 
-       stage('Check Docker permissions') {
+       stage('checking enviro conditions') {
             steps {
                 script {
                     try {
+                        sh 'id'
+                        sh 'ls -l /var/run/docker.sock'
+                        sh 'groups'
                         sh 'docker info'
                         echo 'Jenkins has the necessary permissions to interact with the Docker daemon.'
                     } catch (Exception e) {
