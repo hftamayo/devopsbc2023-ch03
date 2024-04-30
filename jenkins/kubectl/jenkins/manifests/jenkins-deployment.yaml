@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: jenkins
-          image: hftamayo/jenkinsvitamines:0.0.7
+          image: hftamayo/jenkinsvitamines:0.0.8
           resources:
             limits:
               memory: "2Gi"
