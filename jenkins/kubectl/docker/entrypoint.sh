@@ -4,4 +4,4 @@
 chown root:docker /var/run/docker.sock
 
 # Run the original Jenkins entrypoint script
-exec /sbin/tini -- /usr/local/bin/jenkins.sh
+exec tini -- /usr/local/bin/jenkins.sh
