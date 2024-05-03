@@ -62,3 +62,9 @@ If you have a test environment that can support more than a single Kubernetes no
 
 Remember to choose the tool that best fits your specific needs and environment.
 
+### Executing the CI/CD pipeline ###
+
+1. DinD: Perhaps this is the most stupid approach to run a pipeline, this method is based on expose the docker.sock to the pipeline is is barely impossible to achieve this without root permissions, please refer to this commit and almost six weeks before trying how to do this safely without any luck: [eed1507](https://github.com/hftamayo/devopsbc2023-ch03/commit/eed150787e2128cb33e103ca87c76764633b1550)
+
+2. Using Docker Pipeline plugin
+
