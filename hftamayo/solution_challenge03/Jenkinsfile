@@ -106,7 +106,7 @@ pipeline {
                             sh 'docker run --name worker_test -d ch03be_worker:test'
                             catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                                 echo 'Running worker microservice test routines'
-                                sh 'docker exec -it worker_test dotnet test'
+                                sh 'docker exec -i worker_test dotnet test'
                             }
                         }
                     }
@@ -188,7 +188,7 @@ pipeline {
                             sh 'docker run --name result_test -d ch03be_result:test'
                             catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                                 echo 'Running result microservice test routines'
-                                sh 'docker exec -it result_test npm test'
+                                sh 'docker exec -i result_test npm test'
                             }
                         }
                     }
@@ -270,7 +270,7 @@ pipeline {
                             sh 'docker run --name vote_test -d ch03fe_vote:test'
                             catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                                 echo 'Running vote microservice test routines'
-                                sh 'docker exec -it vote_test pytest'
+                                sh 'docker exec -i vote_test pytest'
                             }
                         }
                     }
