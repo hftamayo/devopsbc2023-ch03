@@ -6,17 +6,12 @@ RUN apt-get update && \
                        ca-certificates \
                        curl \
                        gnupg2 \
-                       software-properties-common \
-                       tini && which tini && \
+                       software-properties-common && \
     curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - && \
     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" && \
     apt-get update && \
     apt-get install -y docker-ce docker-ce-cli containerd.io && \
     apt-get clean
-
-    #hftamayo: ensuring docker group id
-RUN groupmod -g 994 docker && \
-    usermod -aG docker jenkins
 
     #kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
@@ -26,15 +21,5 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && \
     chmod +x get_helm.sh && \
     ./get_helm.sh 
-
-#hftamayo    
-COPY entrypoint.sh /entrypoint.sh
-
-RUN chmod +x /entrypoint.sh    
-
-#hftamayo
-USER root
-
-ENTRYPOINT ["/entrypoint.sh"]
 
 USER jenkins
