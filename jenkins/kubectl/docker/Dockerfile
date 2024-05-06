@@ -22,4 +22,8 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
     chmod +x get_helm.sh && \
     ./get_helm.sh 
 
+#hftamayo
+RUN groupmod -g 994 docker && \
+    usermod -aG docker jenkins    
+
 USER jenkins
