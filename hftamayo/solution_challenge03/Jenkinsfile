@@ -101,7 +101,12 @@ pipeline {
                     steps {
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             echo 'Building worker microservice docker image for testing'
-                            sh 'docker buildx build --platform linux/amd64 -t ch03be_worker:test --target test --load .'
+                            container('kaniko') {
+                                sh '''#!/busybox/sh
+                                /kaniko/executor --context dir://$(pwd) --dockerfile=$(pwd)/Dockerfile --destination=ch03be_worker:test --tarPath=/tmp/image.tar
+                                '''
+                            }
+                            sh 'docker load -i /tmp/image.tar'
                             sh 'docker run --name worker_test -d ch03be_worker:test'
                             catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                                 echo 'Running worker microservice test routines'
