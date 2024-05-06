@@ -72,17 +72,16 @@ pipeline {
             }
         }
 
-       stage('checking enviro conditions') {
+       stage('Deploying Kaniko container manager') {
             steps {
                 script {
                     try {
-                        sh 'id'
-                        sh 'ls -l /var/run/docker.sock'
-                        sh 'groups'
-                        sh 'docker info'
-                        echo 'Jenkins has the necessary permissions to interact with the Docker daemon.'
+                        sh 'echo "Configuring Kaniko"'
+                        sh 'mkdir -p /kaniko/.docker'
+                        sh 'echo "{\"auths\":{\"your-repo\":{\"username\":\"your-username\",\"password\":\"your-password\"}}}" > /kaniko/.docker/config.json'
+                        echo 'Kaniko has been configured successfully.'
                     } catch (Exception e) {
-                        error 'Jenkins does not have the necessary permissions to interact with the Docker daemon.'
+                        error 'Failed to configure kaniko'
                     }
                 }
             }
