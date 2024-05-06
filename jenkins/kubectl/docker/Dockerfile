@@ -28,4 +28,10 @@ RUN groupmod -g 994 docker && \
     usermod -aG docker jenkins && \    
     echo "jenkins ALL=NOPASSWD: ALL" >> /etc/sudoers
 
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]    
+
 USER jenkins
