@@ -6,7 +6,8 @@ RUN apt-get update && \
                        ca-certificates \
                        curl \
                        gnupg2 \
-                       software-properties-common && \
+                       software-properties-common \
+                       sudo && \
     curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - && \
     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" && \
     apt-get update && \
@@ -24,6 +25,7 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
 
 #hftamayo
 RUN groupmod -g 994 docker && \
-    usermod -aG docker jenkins    
+    usermod -aG docker jenkins && \    
+    echo "jenkins ALL=NOPASSWD: ALL" >> /etc/sudoers
 
 USER jenkins
