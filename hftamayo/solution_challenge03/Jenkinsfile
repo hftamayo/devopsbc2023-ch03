@@ -77,8 +77,8 @@ pipeline {
                 script {
                     try {
                         sh 'echo "Configuring Kaniko"'
-                        sh 'mkdir -p /kaniko/.docker'
-                        sh 'echo "{\"auths\":{\"your-repo\":{\"username\":\"your-username\",\"password\":\"your-password\"}}}" > /kaniko/.docker/config.json'
+                        sh 'mkdir -p /tmp/kaniko/.docker'
+                        sh 'echo "{\"auths\":{\"your-repo\":{\"username\":\"your-username\",\"password\":\"your-password\"}}}" > /tmp/kaniko/.docker/config.json'
                         echo 'Kaniko has been configured successfully.'
                     } catch (Exception e) {
                         error 'Failed to configure kaniko'
@@ -103,7 +103,7 @@ pipeline {
                             echo 'Building worker microservice docker image for testing'
                             container('kaniko') {
                                 sh '''#!/busybox/sh
-                                /kaniko/executor --context dir://$(pwd) --dockerfile=$(pwd)/Dockerfile --destination=ch03be_worker:test --tarPath=/tmp/image.tar
+                                /kaniko/executor --context dir://$(pwd)/worker --dockerfile=$(pwd)/worker/Dockerfile --destination=ch03be_worker:test --tarPath=/tmp/image.tar
                                 '''
                             }
                             sh 'docker load -i /tmp/image.tar'
