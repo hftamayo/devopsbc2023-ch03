@@ -25,13 +25,9 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
 
 #hftamayo
 RUN groupmod -g 994 docker && \
-    usermod -aG docker jenkins && \    
+    usermod -aG docker jenkins && \
+    usermod -aG root jenkins && \    
     echo "jenkins ALL=NOPASSWD: ALL" >> /etc/sudoers
 
-COPY entrypoint.sh /entrypoint.sh
-
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]    
 
 USER jenkins
