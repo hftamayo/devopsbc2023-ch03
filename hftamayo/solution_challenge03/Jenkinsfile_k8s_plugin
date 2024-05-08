@@ -1,12 +1,6 @@
 /* groovylint-disable-next-line CompileStatic */
 pipeline {
-    agent {
-        dockerfile {
-            filename 'Dockerfile.jenkinsAgent'
-            label 'jenkins-agent'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any
     stages {
         stage('Clone Repository') {
             steps {
