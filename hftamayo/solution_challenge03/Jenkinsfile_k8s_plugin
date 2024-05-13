@@ -90,39 +90,39 @@ pipeline {
 
         stage('Worker dotnet microservice') {
             stages {
-                stage('change to worker directory') {
+                stage('building worker docker container and running test routines') {
                     steps {
                         dir('worker') {
                             echo 'Changing to worker directory'
+                            sh 'ls -l'
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                echo 'Building worker microservice docker image for testing'
+                                sh 'docker buildx build --platform linux/amd64 -t ch03be_worker:test --target test --load .'
+                                sh 'docker run --name worker_test -d ch03be_worker:test'
+                                catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                                    echo 'Running worker microservice test routines'
+                                    sh 'docker exec -i worker_test dotnet test'
+                                }
+                            }
+
+                            post {
+                                always {
+                                    echo 'Stopping and removing the worker microservice test container'
+                                    sh 'docker stop worker_test'
+                                    sh 'docker rm worker_test'
+                                }
+                                success {
+                                    echo 'Worker microservice test docker image built successfully'
+                                }
+                                failure {
+                                    echo 'Failed to build worker microservice test Docker image'
+                                }
+                            }
                         }                        // code inside the steps block
                     }
                 }
 
-                stage('building worker docker container and running testing') {
-                    steps {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            echo 'Building worker microservice docker image for testing'
-                            sh 'docker buildx build --platform linux/amd64 -t ch03be_worker:test --target test --load .'
-                            sh 'docker run --name worker_test -d ch03be_worker:test'
-                            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-                                echo 'Running worker microservice test routines'
-                                sh 'docker exec -i worker_test dotnet test'
-                            }
-                        }
-                    }
-                    post {
-                        always {
-                            echo 'Stopping the worker microservice test container'
-                            sh 'docker stop worker_test'
-                        }
-                        success {
-                            echo 'Worker microservice test docker image built successfully'
-                        }
-                        failure {
-                            echo 'Failed to build worker microservice test Docker image'
-                        }
-                    }
-                }
+                
 
                 stage('build worker microservice docker image for production') {
                     steps {
