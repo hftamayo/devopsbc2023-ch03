@@ -121,22 +121,23 @@ pipeline {
                                     sh 'docker exec -i worker_test dotnet test'
                                 }
                             }
+                        }
+                    }                            
 
-                            post {
-                                always {
-                                    echo 'Stopping and removing the worker microservice test container'
-                                    sh 'docker stop worker_test'
-                                    sh 'docker rm worker_test'
-                                }
-                                success {
-                                    echo 'Worker microservice test docker image built successfully'
-                                }
-                                failure {
-                                    echo 'Failed to build worker microservice test Docker image'
-                                }
-                            }
+                    post {
+                        always {
+                            echo 'Stopping and removing the worker microservice test container'
+                            sh 'docker stop worker_test'
+                            sh 'docker rm worker_test'
+                        }
+                        success {
+                            echo 'Worker microservice test docker image built successfully'
+                        }
+                        failure {
+                            echo 'Failed to build worker microservice test Docker image'
                         }
                     }
+
                 }       
 
                 stage('build worker microservice docker image for production') {
@@ -144,19 +145,20 @@ pipeline {
                         dir('worker'){
                             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                                 echo 'Building worker microservice docker image for production'
-                                sh 'docker buildx build --platform linux/amd64 -t ch03be_worker:stable-1.0.0 --target production --load .'
-                                sh "docker tag ch03be_worker:stable-1.0.0 hftamayo/ch03be_worker:stable-1.0.0"
-                            }                    
-                            post {
-                                success {
-                                    echo 'Worker microservice production docker image built successfully'
-                                }
-                                failure {
-                                    echo 'Failed to build worker microservice production Docker image'
-                                }
-                            }
+                                sh 'docker buildx build --platform linux/amd64 -t ch03be_worker:stable-0.0.1 --target production --load .'
+                                sh "docker tag ch03be_worker:stable-0.0.1 hftamayo/ch03be_worker:stable-0.0.1"
+                            }  
+                        }
+                    }                                              
+                    post {
+                        success {
+                            echo 'Worker microservice production docker image built successfully'
+                        }
+                        failure {
+                            echo 'Failed to build worker microservice production Docker image'
                         }
                     }
+
                 }
 
                 stage('Push worker microservice production image') {
@@ -165,7 +167,7 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
                             sh '''
                                 echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-                                docker push $DOCKER_HUB_USERNAME/ch03be_worker:stable-1.0.0
+                                docker push $DOCKER_HUB_USERNAME/ch03be_worker:stable-0.0.1
                             '''
                         }
                     }
