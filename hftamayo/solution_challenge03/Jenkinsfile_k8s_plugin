@@ -141,18 +141,20 @@ pipeline {
 
                 stage('build worker microservice docker image for production') {
                     steps {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            echo 'Building worker microservice docker image for production'
-                            sh 'docker buildx build --platform linux/amd64 -t ch03be_worker:stable-1.0.0 --target production --load .'
-                            sh "docker tag ch03be_worker:stable-1.0.0 hftamayo/ch03be_worker:stable-1.0.0"
-                        }
-                    }
-                    post {
-                        success {
-                            echo 'Worker microservice production docker image built successfully'
-                        }
-                        failure {
-                            echo 'Failed to build worker microservice production Docker image'
+                        dir('worker'){
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                echo 'Building worker microservice docker image for production'
+                                sh 'docker buildx build --platform linux/amd64 -t ch03be_worker:stable-1.0.0 --target production --load .'
+                                sh "docker tag ch03be_worker:stable-1.0.0 hftamayo/ch03be_worker:stable-1.0.0"
+                            }                    
+                            post {
+                                success {
+                                    echo 'Worker microservice production docker image built successfully'
+                                }
+                                failure {
+                                    echo 'Failed to build worker microservice production Docker image'
+                                }
+                            }
                         }
                     }
                 }
