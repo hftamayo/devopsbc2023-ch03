@@ -143,7 +143,7 @@ pipeline {
                     steps {
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             echo 'Building worker microservice docker image for production'
-                            sh 'docker build -t ch03be_worker:stable-1.0.0 . --target production --load .'
+                            sh 'docker buildx build --platform linux/amd64 -t ch03be_worker:stable-1.0.0 --target production --load .'
                             sh "docker tag ch03be_worker:stable-1.0.0 hftamayo/ch03be_worker:stable-1.0.0"
                         }
                     }
