@@ -12,7 +12,7 @@ RUN if ls Tests/*.csproj 1> /dev/null 2>&1; then dotnet test --no-build --verbos
 RUN dotnet publish -c release -o /app --self-contained false --no-restore
 
 #stage2: build the production image
-FROM mcr.microsoft.com/dotnet/runtime:7.0
+FROM mcr.microsoft.com/dotnet/runtime:7.0 as production
 WORKDIR /app
 COPY --from=test /app .
 ENTRYPOINT ["dotnet", "Worker.dll"]
