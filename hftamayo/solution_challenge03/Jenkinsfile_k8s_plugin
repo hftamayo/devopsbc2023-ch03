@@ -164,7 +164,7 @@ pipeline {
                 stage('Push worker microservice production image') {
                     steps {
                         echo 'Pushing stable worker microservice image'
-                        withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'JENKINS_DOCKER_HUB_USERNAME', passwordVariable: 'JENKINS_DOCKER_HUB_PASSWORD')]) {
+                        withCredentials([usernamePassword(credentialsId: 'personalDockerHubCredentials', usernameVariable: 'JENKINS_DOCKER_HUB_USERNAME', passwordVariable: 'JENKINS_DOCKER_HUB_PASSWORD')]) {
                             sh '''
                                 echo $JENKINS_DOCKER_HUB_PASSWORD | docker login -u $JENKINS_DOCKER_HUB_USERNAME --password-stdin
                                 docker push hftamayo/ch03be_worker:stable-0.0.1
