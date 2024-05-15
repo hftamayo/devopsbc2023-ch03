@@ -164,10 +164,10 @@ pipeline {
                 stage('Push worker microservice production image') {
                     steps {
                         echo 'Pushing stable worker microservice image'
-                        withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
+                        withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'JENKINS_DOCKER_HUB_USERNAME', passwordVariable: 'JENKINS_DOCKER_HUB_PASSWORD')]) {
                             sh '''
-                                echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-                                docker push $DOCKER_HUB_USERNAME/ch03be_worker:stable-0.0.1
+                                echo $JENKINS_DOCKER_HUB_PASSWORD | docker login -u $JENKINS_DOCKER_HUB_USERNAME --password-stdin
+                                docker push hftamayo/ch03be_worker:stable-0.0.1
                             '''
                         }
                     }
