@@ -179,34 +179,27 @@ pipeline {
                         dir('solutions'){
                             sh '''
                             if [ -f "microservices/worker/microdotnet_deployment.yaml" ]; then
-                                export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
-                                envsubst < k8s/microdotnet.yaml | microk8s.kubectl apply -f -
-                            else
-                                echo "No deployment file found"
-                            fi
-
-                                if [ -f "microservices/worker/microdotnet_deployment.yaml" ]; then
-                                    kubectl apply -f microservices/worker/microdotnet_deployment.yaml
-                                    if [ $? -eq 0 ]; then
-                                        echo "Deployment applied successfully"
-                                        if [ -f "microservices/worker/microdotnet_service.yaml" ]; then
-                                            kubectl apply -f microservices/worker/microdotnet_service.yaml
-                                            if [ $? -eq 0 ]; then
-                                                echo "Service applied successfully"
-                                            else
-                                                echo "Failed to apply service"
-                                                exit 1
-                                            fi
+                                kubectl apply -f microservices/worker/microdotnet_deployment.yaml
+                                if [ $? -eq 0 ]; then
+                                    echo "Deployment applied successfully"
+                                    if [ -f "microservices/worker/microdotnet_service.yaml" ]; then
+                                        kubectl apply -f microservices/worker/microdotnet_service.yaml
+                                        if [ $? -eq 0 ]; then
+                                            echo "Service applied successfully"
                                         else
-                                            echo "No service file found"
+                                            echo "Failed to apply service"
+                                            exit 1
                                         fi
                                     else
-                                        echo "Failed to apply deployment"
-                                        exit 1
+                                        echo "No service file found"
                                     fi
                                 else
-                                    echo "No deployment file found"
-                                fi			            
+                                    echo "Failed to apply deployment"
+                                    exit 1
+                                fi
+                            else
+                                echo "No deployment file found"
+                            fi			            
 			            '''                            
 		                }
 		            }
