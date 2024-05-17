@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: ch03frontend
-        image: hftamayo/ch03fe_vote:stable-1.0.0
+        image: hftamayo/ch03fe_vote:stable-0.0.1
         ports:
         - containerPort: 80
