@@ -208,32 +208,47 @@ pipeline {
             }
         }
 
-        stage('Result microservice nodejs') {
+        stage('Result nodejs microservice') {
             stages {
-                stage('change to result directory') {
+                stage('Check for tests') {    
                     steps {
                         dir('result') {
-                            echo 'Changing to result directory'
+                            script {
+                                // Check if there are any test files
+                                def hasTests = sh(script: 'ls test/**', returnStatus: true) == 0
+                                // Save the result in a pipeline variable
+                                env.HAS_TESTS = hasTests.toString()
+                            }
                         }
                     }
                 }
 
-                stage('build and test of the result microservice docker container') {
+                stage('building result docker container and running test routines') {
+                    // Only run this stage if there are tests
+                    when {
+                        expression { env.HAS_TESTS == 'true' }
+                    }
                     steps {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            echo 'Building result microservice docker image for testing'
-                            sh 'docker build -t ch03be_result:test . --target test --load .'
-                            sh 'docker run --name result_test -d ch03be_result:test'
-                            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-                                echo 'Running result microservice test routines'
-                                sh 'docker exec -i result_test npm test'
+                        dir('result') {
+                            echo 'Changing to result directory'
+                            sh 'ls -l'
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                echo 'Building result microservice docker image for testing'
+                                sh 'docker buildx build --platform linux/amd64 -t ch03be_result:test --target test --load .'
+                                sh 'docker run --name result_test -d ch03be_result:test'
+                                catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                                    echo 'Running result microservice test routines'
+                                    sh 'docker exec -i result_test npm test'
+                                }
                             }
                         }
-                    }
+                    }                            
+
                     post {
                         always {
-                            echo 'Stopping the result microservice test container'
+                            echo 'Stopping and removing the result microservice test container'
                             sh 'docker stop result_test'
+                            sh 'docker rm result_test'
                         }
                         success {
                             echo 'Result microservice test docker image built successfully'
@@ -242,16 +257,19 @@ pipeline {
                             echo 'Failed to build result microservice test Docker image'
                         }
                     }
-                }
+
+                }       
 
                 stage('build result microservice docker image for production') {
                     steps {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            echo 'Building result microservice docker image for production'
-                            sh 'docker build -t ch03be_result:stable-1.0.0 . --target production --load .'
-                            sh 'docker tag ch03be_result:stable-1.0.0 hftamayo/ch03be_result:stable-1.0.0'
+                        dir('result'){
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                echo 'Building result microservice docker image for production'
+                                sh 'docker buildx build --platform linux/amd64 -t ch03be_result:stable-0.0.1 --target production --load .'
+                                sh "docker tag ch03be_result:stable-0.0.1 hftamayo/ch03be_result:stable-0.0.1"
+                            }  
                         }
-                    }
+                    }                                              
                     post {
                         success {
                             echo 'Result microservice production docker image built successfully'
@@ -260,62 +278,97 @@ pipeline {
                             echo 'Failed to build result microservice production Docker image'
                         }
                     }
+
                 }
 
                 stage('Push result microservice production image') {
                     steps {
-                        echo 'Pushing the result microservice production image'
-                        withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
+                        echo 'Pushing stable result microservice image'
+                        withCredentials([usernamePassword(credentialsId: 'personalDockerHubCredentials', usernameVariable: 'JENKINS_DOCKER_HUB_USERNAME', passwordVariable: 'JENKINS_DOCKER_HUB_PASSWORD')]) {
                             sh '''
-                                echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-                                docker push $DOCKER_HUB_USERNAME/ch03be_result:stable-1.0.0
+                                echo $JENKINS_DOCKER_HUB_PASSWORD | docker login -u $JENKINS_DOCKER_HUB_USERNAME --password-stdin
+                                docker push hftamayo/ch03be_result:stable-0.0.1
                             '''
                         }
                     }
                 }
 
-                stage('Deploy result microservice production k8s cluster') {
+                stage('build result microservice deployment and service to k8s cluster') {
                     steps {
-                        echo 'Deploying the result microservice'
-                        sh '''
-                            if [ -f "k8s/micronode.yaml" ]; then
-                                export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
-                                envsubst < k8s/micronode.yaml | microk8s.kubectl apply -f -
+                    	echo 'Deploying the result microservice to the k8s cluster'
+                        dir('solutions'){
+                            sh '''
+                            if [ -f "microservices/result/micronode_deployment.yaml" ]; then
+                                kubectl apply -f microservices/result/micronode_deployment.yaml
+                                if [ $? -eq 0 ]; then
+                                    echo "Deployment applied successfully"
+                                    if [ -f "microservices/result/micronode_service.yaml" ]; then
+                                        kubectl apply -f microservices/result/micronode_service.yaml
+                                        if [ $? -eq 0 ]; then
+                                            echo "Service applied successfully"
+                                        else
+                                            echo "Failed to apply service"
+                                            exit 1
+                                        fi
+                                    else
+                                        echo "No service file found"
+                                    fi
+                                else
+                                    echo "Failed to apply deployment"
+                                    exit 1
+                                fi
                             else
                                 echo "No deployment file found"
-                            fi
-                        '''
-                    }
-                }
+                            fi			            
+			            '''                            
+		                }
+		            }
+		        }
+
             }
         }
 
-        stage('Frontend python microservice') {
+        stage('Vote python microservice') {
             stages {
-                stage('change to vote directory') {
+                stage('Check for tests') {    
                     steps {
                         dir('vote') {
-                            echo 'Changing to vote directory'
+                            script {
+                                // Check if there are any test files
+                                def hasTests = sh(script: 'ls test/**', returnStatus: true) == 0
+                                // Save the result in a pipeline variable
+                                env.HAS_TESTS = hasTests.toString()
+                            }
                         }
                     }
                 }
 
-                stage('build frontend docker image for testing') {
+                stage('building vote docker container and running test routines') {
+                    // Only run this stage if there are tests
+                    when {
+                        expression { env.HAS_TESTS == 'true' }
+                    }
                     steps {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            echo 'Building frontend docker image for testing'
-                            sh 'docker build -t ch03fe_vote:test --target test --load .'
-                            sh 'docker run --name vote_test -d ch03fe_vote:test'
-                            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-                                echo 'Running vote microservice test routines'
-                                sh 'docker exec -i vote_test pytest'
+                        dir('vote') {
+                            echo 'Changing to vote directory'
+                            sh 'ls -l'
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                echo 'Building worker microservice docker image for testing'
+                                sh 'docker buildx build --platform linux/amd64 -t ch03fe_vote:test --target test --load .'
+                                sh 'docker run --name vote_test -d ch03fe_vote:test'
+                                catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                                    echo 'Running vote microservice test routines'
+                                    sh 'docker exec -i vote_test pytest'
+                                }
                             }
                         }
-                    }
+                    }                            
+
                     post {
                         always {
-                            echo 'Stopping the vote microservice test container'
+                            echo 'Stopping and removing the vote microservice test container'
                             sh 'docker stop vote_test'
+                            sh 'docker rm vote_test'
                         }
                         success {
                             echo 'Vote microservice test docker image built successfully'
@@ -324,16 +377,19 @@ pipeline {
                             echo 'Failed to build vote microservice test Docker image'
                         }
                     }
-                }
+
+                }       
 
                 stage('build vote microservice docker image for production') {
                     steps {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            echo 'Building vote microservice docker image for production'
-                            sh 'docker build -t ch03fe_vote:stable-1.0.0 . --target production --load .'
-                            sh 'docker tag ch03fe_vote:stable-1.0.0 hftamayo/ch03fe_vote:stable-1.0.0'
+                        dir('vote'){
+                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                echo 'Building vote microservice docker image for production'
+                                sh 'docker buildx build --platform linux/amd64 -t ch03fe_vote:stable-0.0.1 --target production --load .'
+                                sh "docker tag ch03fe_vote:stable-0.0.1 hftamayo/ch03fe_vote:stable-0.0.1"
+                            }  
                         }
-                    }
+                    }                                              
                     post {
                         success {
                             echo 'Vote microservice production docker image built successfully'
@@ -342,34 +398,55 @@ pipeline {
                             echo 'Failed to build vote microservice production Docker image'
                         }
                     }
+
                 }
 
                 stage('Push vote microservice production image') {
                     steps {
-                        echo 'Pushing the vote microservice production image'
-                        withCredentials([usernamePassword(credentialsId: 'dockerHubCredentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
+                        echo 'Pushing stable vote microservice image'
+                        withCredentials([usernamePassword(credentialsId: 'personalDockerHubCredentials', usernameVariable: 'JENKINS_DOCKER_HUB_USERNAME', passwordVariable: 'JENKINS_DOCKER_HUB_PASSWORD')]) {
                             sh '''
-                                echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin
-                                docker push $DOCKER_HUB_USERNAME/ch03fe_vote:stable-1.0.0
+                                echo $JENKINS_DOCKER_HUB_PASSWORD | docker login -u $JENKINS_DOCKER_HUB_USERNAME --password-stdin
+                                docker push hftamayo/ch03fe_vote:stable-0.0.1
                             '''
                         }
                     }
                 }
 
-                stage('Deploy') {
+                stage('build vote microservice deployment and service to k8s cluster') {
                     steps {
-                        echo 'Deploying the frontend'
-                        sh '''
-                            if [ -f "k8s/frontend.yaml" ]; then
-                                export DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME
-                                envsubst < k8s/frontend.yaml | microk8s.kubectl apply -f -
+                    	echo 'Deploying the vote microservice to the k8s cluster'
+                        dir('solutions'){
+                            sh '''
+                            if [ -f "microservices/frontend/frontend_deployment.yaml" ]; then
+                                kubectl apply -f microservices/frontend/frontend_deployment.yaml
+                                if [ $? -eq 0 ]; then
+                                    echo "Deployment applied successfully"
+                                    if [ -f "microservices/frontend/frontend_service.yaml" ]; then
+                                        kubectl apply -f microservices/frontend/frontend_service.yaml
+                                        if [ $? -eq 0 ]; then
+                                            echo "Service applied successfully"
+                                        else
+                                            echo "Failed to apply service"
+                                            exit 1
+                                        fi
+                                    else
+                                        echo "No service file found"
+                                    fi
+                                else
+                                    echo "Failed to apply deployment"
+                                    exit 1
+                                fi
                             else
                                 echo "No deployment file found"
-                            fi
-                        '''
-                    }
-                }
+                            fi			            
+			            '''                            
+		                }
+		            }
+		        }
+
             }
         }
+
     }
 }
