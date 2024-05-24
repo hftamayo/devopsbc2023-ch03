@@ -2,18 +2,32 @@
 pipeline {
     agent any
     stages {
-        
+        stage('start'){
+            steps {
+                script {
+                    notifySlack('Rossana Suarez BC2023 Exercise 3 Pipeline started')
+                }
+            }
+        }
+
         stage('Clone Repository') {
             steps {
+                script {
+                    notifySlack('Stage 1: Cloning the repository')
+                }
                 echo 'Cloning the repository'
                 git branch: 'main', url: 'https://github.com/hftamayo/devopsbc2023-ch03.git'
             }
             post{
                 success {
-                    notifySlack('Repository cloned successfully')
+                    script {
+                        notifySlack('Repository cloned successfully')
+                    }
                 }
                 failure {
-                    notifySlack('Failed to clone repository')
+                    script {
+                        notifySlack('Failed to clone the repository')
+                    }
                 }
             }
         }
@@ -22,6 +36,9 @@ pipeline {
             stages {
                 stage('Deploy postgres') {
                     steps {
+                        script {
+                            notifySlack('Stage 2: Deploying the database layer, 2 substages')
+                        }
                         echo 'Deploying postgres'
                         sh '''
                             if [ -f "k8s/db/postgres_deployment.yaml" ]; then
@@ -50,10 +67,14 @@ pipeline {
                     }
                     post {
                         success {
-                            notifySlack('Postgres deployment successful')
+                            script {
+                                notifySlack('Postgres deployment successful')
+                            }
                         }
                         failure {
-                            notifySlack('Postgres deployment failed')
+                            script {
+                                notifySlack('Postgres deployment failed')
+                            }
                         }
                     }
                 }
@@ -87,10 +108,14 @@ pipeline {
                     }
                     post {
                         success {
-                            notifySlack('Redis deployment successful')
+                            script {
+                                notifySlack('Redis deployment successful')
+                            }
                         }
                         failure {
-                            notifySlack('Redis deployment failed')
+                            script {
+                                notifySlack('Redis deployment failed')
+                            }
                         }
                     }
                 }
@@ -114,6 +139,7 @@ pipeline {
     //     }
 
         stage('Worker dotnet microservice') {
+            notifySlack('Stage 3: Building and deploying the worker microservice, 3 substages')
             stages {
                 stage('Check for tests') {    
                     steps {
