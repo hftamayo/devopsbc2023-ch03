@@ -2,10 +2,19 @@
 pipeline {
     agent any
     stages {
+        
         stage('Clone Repository') {
             steps {
                 echo 'Cloning the repository'
                 git branch: 'main', url: 'https://github.com/hftamayo/devopsbc2023-ch03.git'
+            }
+            post{
+                success {
+                    notifySlack('Repository cloned successfully')
+                }
+                failure {
+                    notifySlack('Failed to clone repository')
+                }
             }
         }
 
@@ -39,6 +48,14 @@ pipeline {
                             fi
                         '''
                     }
+                    post {
+                        success {
+                            notifySlack('Postgres deployment successful')
+                        }
+                        failure {
+                            notifySlack('Postgres deployment failed')
+                        }
+                    }
                 }
                 stage('Deploy redis') {
                     steps {
@@ -67,6 +84,14 @@ pipeline {
                                 echo "No deployment file found"
                             fi
                         '''
+                    }
+                    post {
+                        success {
+                            notifySlack('Redis deployment successful')
+                        }
+                        failure {
+                            notifySlack('Redis deployment failed')
+                        }
                     }
                 }
             }
