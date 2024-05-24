@@ -450,3 +450,13 @@ pipeline {
 
     }
 }
+
+def notifySlack(String message) {
+    slackSend (
+        color: '#FFFF00',
+        message: message,
+        channel: '#devopsbc2023',
+        teamDomain: 'devopsbc2023',
+        token: 'token'
+    )
+}
